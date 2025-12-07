@@ -6,3 +6,6 @@ target_link_libraries(test_decompose ${PROJECT_NAME})
 
 add_executable (test_decompose_interleave test_decompose_interleave.cpp)
 target_link_libraries(test_decompose_interleave ${PROJECT_NAME})
+
+add_executable (test_coeff_decompose_interleave test_coeff_decompose_interleave.cpp)
+target_link_libraries(test_coeff_decompose_interleave ${PROJECT_NAME})
