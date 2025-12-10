@@ -260,6 +260,18 @@ void data_reverse_reorder_1D(T * data_pos, int n_nodal, int n_coeff, const T * n
     }
 }
 
+template <class T>
+void data_reverse_reorder_1D_for_generating_purpose(T * data_pos, int n_nodal, int n_coeff, const T * nodal_buffer, const T * coeff_buffer){
+    const T * nodal_pos = nodal_buffer;
+    const T * coeff_pos = coeff_buffer;
+    T * cur_data_pos = data_pos;
+    for(int i=0; i<n_coeff; i++){
+        *(cur_data_pos++) = *(nodal_pos++);
+        *(cur_data_pos++) = *(coeff_pos++);
+    }
+    *(cur_data_pos++) = *(nodal_pos++);
+}
+
 /*
     oooxx       oooxx       oxoxo
     oooxx   (1) xxxxx   (2) xxxxo
@@ -291,6 +303,26 @@ void data_reverse_reorder_2D(T * data_pos, T * data_buffer, size_t n1, size_t n2
         for(int j=0; j<n2; j++){
             cur_data_pos[j] = (cur_data_pos[j] + cur_data_pos[-stride + j]) / 2;
         }
+    }
+}
+
+template <class T>
+void data_reverse_reorder_2D_for_generating_purpose(T * data_pos, T * data_buffer, size_t n1, size_t n2, size_t stride){
+    size_t n1_nodal = (n1 >> 1) + 1;
+    size_t n1_coeff = n1 - n1_nodal;
+    size_t n2_nodal = (n2 >> 1) + 1;
+    size_t n2_coeff = n2 - n2_nodal;
+    T * cur_data_pos = data_pos;
+    T * nodal_pos = data_buffer;
+    T * coeff_pos = data_buffer + n2_nodal;
+    // do reorder (1)
+    // TODO: change to online processing for memory saving
+    switch_rows_2D_by_buffer_reverse(data_pos, data_buffer, n1, n2, stride);
+    // do reorder (2)
+    for(int i=0; i<n1; i++){
+        memcpy(data_buffer, cur_data_pos, n2 * sizeof(T));
+        data_reverse_reorder_1D(cur_data_pos, n2_nodal, n2_coeff, nodal_pos, coeff_pos);
+        cur_data_pos += stride;
     }
 }
 
@@ -355,6 +387,28 @@ void data_reverse_reorder_3D(T * data_pos, T * data_buffer, size_t n1, size_t n2
             }
             cur_data_pos += dim1_stride;
         }
+    }
+}
+
+template <class T>
+void data_reverse_reorder_3D_for_generating_purpose(T * data_pos, T * data_buffer, size_t n1, size_t n2, size_t n3, size_t dim0_stride, size_t dim1_stride){
+    size_t n1_nodal = (n1 >> 1) + 1;
+    size_t n1_coeff = n1 - n1_nodal;
+    size_t n2_nodal = (n2 >> 1) + 1;
+    size_t n2_coeff = n2 - n2_nodal;
+    size_t n3_nodal = (n3 >> 1) + 1;
+    size_t n3_coeff = n3 - n3_nodal;
+    T * cur_data_pos = data_pos;
+    // reorder vertically
+    for(int j=0; j<n2; j++){
+        switch_rows_2D_by_buffer_reverse(cur_data_pos, data_buffer, n1, n3, dim0_stride);
+        cur_data_pos += dim1_stride;
+    }
+    // do 2D reorder
+    cur_data_pos = data_pos;
+    for(int i=0; i<n1; i++){
+        data_reverse_reorder_2D_for_generating_purpose(cur_data_pos, data_buffer, n2, n3, dim1_stride);
+        cur_data_pos += dim0_stride;
     }
 }
 
