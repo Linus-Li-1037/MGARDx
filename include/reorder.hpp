@@ -321,7 +321,7 @@ void data_reverse_reorder_2D_for_generating_purpose(T * data_pos, T * data_buffe
     // do reorder (2)
     for(int i=0; i<n1; i++){
         memcpy(data_buffer, cur_data_pos, n2 * sizeof(T));
-        data_reverse_reorder_1D(cur_data_pos, n2_nodal, n2_coeff, nodal_pos, coeff_pos);
+        data_reverse_reorder_1D_for_generating_purpose(cur_data_pos, n2_nodal, n2_coeff, nodal_pos, coeff_pos);
         cur_data_pos += stride;
     }
 }
