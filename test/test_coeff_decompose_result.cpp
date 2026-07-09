@@ -4,50 +4,46 @@
 #include <vector>
 #include <iomanip>
 #include <cmath>
-#include "decompose_interleave.hpp"
-#include "reposition_recompose.hpp"
+#include "coeff_decompose_interleave.hpp"
+#include "coeff_reposition_recompose.hpp"
 
 using namespace std;
 
 template <class T>
-std::vector<std::vector<T>> test_decompose(vector<T>& data, const vector<size_t>& dims, int target_level){
+std::vector<std::vector<T>> test_decompose(vector<T>& data, const vector<size_t>& dims, int direction, int target_level){
     struct timespec start, end;
     int err = 0;
     err = clock_gettime(CLOCK_REALTIME, &start);
-    MGARD::Decomposer_Interleaver<T> decomposer;
-    std::vector<std::vector<T>> level_buffers = decomposer.decompose(data.data(), dims, target_level, false, true);
+    MGARD::Coeff_Decomposer_Interleaver<T> decomposer;
+    std::vector<std::vector<T>> level_buffers = decomposer.decompose(data.data(), dims, direction, target_level, true);
     err = clock_gettime(CLOCK_REALTIME, &end);
     cout << "Decomposition time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
     return level_buffers;
 }
 
 template <class T>
-std::vector<T> test_recompose(std::vector<std::vector<T>>& level_buffers, const vector<size_t>& dims, int target_level){
+std::vector<T> test_recompose(std::vector<std::vector<T>>& level_buffers, const vector<size_t>& dims, int direction, int target_level){
     struct timespec start, end;
     int err = 0;
     err = clock_gettime(CLOCK_REALTIME, &start);
-    MGARD::Repositioner_Recomposer<T> recomposer;
-    std::vector<T> recovered_data = recomposer.recompose(level_buffers, dims, target_level, false, true);
+    MGARD::Coeff_Repositioner_Recomposer<T> recomposer;
+    std::vector<T> recovered_data = recomposer.recompose_test(level_buffers, dims, direction, target_level, true);
     err = clock_gettime(CLOCK_REALTIME, &end);
     cout << "Recomposition time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
     return recovered_data;
 }
 
 template <class T>
-void test(string filename, const vector<size_t>& dims, int target_level){
+void test(string filename, string output_filename, const vector<size_t>& dims, int direction, int target_level){
     size_t num_elements = 0;
     auto data = MGARD::readfile<T>(filename.c_str(), num_elements);
     auto data_ori(data);
-    auto level_buffers = test_decompose(data, dims, target_level);
-    double score = 0.0;
-    for (size_t l = 1; l < level_buffers.size(); l++) {
-        const auto& buf = level_buffers[l];
-        for (size_t i = 0; i < buf.size(); i++) {
-            score += std::log1p(std::abs(buf[i]) + 1.0);
-        }
-    }
-    std::cout << "score = " << score << std::endl;
-    auto recovered_data = test_recompose(level_buffers, dims, target_level);
+    auto level_buffers = test_decompose(data, dims, direction, target_level);
+    // for(int i=0; i<level_buffers.size(); i++){
+    //     string level_file_name = output_filename + "/level2_250_250_500_cubic_level_" + to_string(i) + ".dat";
+    //     MGARD::writefile(level_file_name.c_str(), level_buffers[i].data(), level_buffers[i].size());
+    // }
+    auto recovered_data = test_recompose(level_buffers, dims, direction, target_level);
     // struct timespec start, end;
     // int err = 0;
     // err = clock_gettime(CLOCK_REALTIME, &start);
@@ -60,30 +56,32 @@ void test(string filename, const vector<size_t>& dims, int target_level){
     // std::vector<T> recovered_data = recomposer.recompose(level_buffers, dims, target_level, true);
     // err = clock_gettime(CLOCK_REALTIME, &end);
     // cout << "Recomposition time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
-    MGARD::print_statistics(data_ori.data(), recovered_data.data(), num_elements);
+    // MGARD::print_statistics(data_ori.data(), recovered_data.data(), num_elements);
+    MGARD::writefile(output_filename.c_str(), recovered_data.data(), num_elements);
 }
 
 int main(int argc, char ** argv){
-    int argv_id = 1;
-    string filename = string(argv[argv_id++]);
-    int type = atoi(argv[argv_id++]); // 0 for float, 1 for double
-    int target_level = atoi(argv[argv_id++]);
-    const int num_dims = atoi(argv[argv_id++]);
+    string filename = string(argv[1]);
+    int type = atoi(argv[2]); // 0 for float, 1 for double
+    int direction = atoi(argv[3]);
+    int target_level = atoi(argv[4]);
+    const int num_dims = atoi(argv[5]);
     vector<size_t> dims(num_dims);
     for(int i=0; i<dims.size(); i++){
-       dims[i] = atoi(argv[argv_id++]);
+       dims[i] = atoi(argv[6 + i]);
        cout << dims[i] << " ";
     }
     cout << endl;
+    string output_filename = string(argv[6 + num_dims]);
     switch(type){
         case 0:
             {
-                test<float>(filename, dims, target_level);
+                test<float>(filename, output_filename, dims, direction, target_level);
                 break;
             }
         case 1:
             {
-                test<double>(filename, dims, target_level);
+                test<double>(filename, output_filename, dims, direction, target_level);
                 break;
             }
         default:

@@ -15,7 +15,7 @@ void test_decompose(vector<T>& data, const vector<size_t>& dims, int target_leve
     int err = 0;
     err = clock_gettime(CLOCK_REALTIME, &start);
     MGARD::Decomposer<T> decomposer;
-    decomposer.decompose(data.data(), dims, target_level, true);
+    decomposer.decompose(data.data(), dims, target_level, false, true);
     err = clock_gettime(CLOCK_REALTIME, &end);
     cout << "Decomposition time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
 }
@@ -26,7 +26,7 @@ void test_recompose(vector<T>& data, const vector<size_t>& dims, int target_leve
     int err = 0;
     err = clock_gettime(CLOCK_REALTIME, &start);
     MGARD::Recomposer<T> recomposer;
-    recomposer.recompose(data.data(), dims, target_level, true);
+    recomposer.recompose(data.data(), dims, target_level, false, true);
     err = clock_gettime(CLOCK_REALTIME, &end);
     cout << "Recomposition time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
 }

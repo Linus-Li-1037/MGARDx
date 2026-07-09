@@ -34,10 +34,10 @@ public:
 				strides[i] = stride;
 				stride *= dims[i];
 			}
-			for(int i=0; i<dims.size(); i++){
-				cout << strides[i] << " ";
-			}
-			cout << endl;
+			// for(int i=0; i<dims.size(); i++){
+			// 	cout << strides[i] << " ";
+			// }
+			// cout << endl;
 		}
 		data_buffer_size = num_elements * sizeof(T);
 		init(dims);

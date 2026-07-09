@@ -1,5 +1,5 @@
-#ifndef _MGARD_DECOMPOSE_INTERLEAVE_HPP
-#define _MGARD_DECOMPOSE_INTERLEAVE_HPP
+#ifndef _MGARD_DECOMPOSE_INTERLEAVE_HYBRID_HPP
+#define _MGARD_DECOMPOSE_INTERLEAVE_HYBRID_HPP
 
 #include <vector>
 #include <cstdlib>
@@ -19,16 +19,16 @@ namespace MGARD{
 using namespace std;
 
 template <class T>
-class Decomposer_Interleaver{
+class Decomposer_Interleaver_hybrid{
 public:
-	Decomposer_Interleaver(bool use_sz_=true){
+	Decomposer_Interleaver_hybrid(bool use_sz_=true){
             use_sz = use_sz_;
         };
-	~Decomposer_Interleaver(){
+	~Decomposer_Interleaver_hybrid(){
 	};
     // return decomposed and interleaved data buffers for each level, num_levels = Dims * MGARD_level (target_level)
 	// Combining MGARD Decomposer and Interleaver
-	std::vector<std::vector<T>> decompose(T * data, const vector<size_t>& dims, size_t target_level, bool hierarchical=false, bool cubic=false, vector<size_t> strides=vector<size_t>()){
+	std::vector<std::vector<T>> decompose(T * data, const vector<size_t>& dims, size_t target_level, vector<size_t> strides=vector<size_t>()){
 		data_begin = data;
 		size_t num_elements = 1;
 		for(const auto& d:dims){
@@ -41,8 +41,9 @@ public:
 			size_t h = 1;
 			size_t n = dims[0];
 			for(int current_level=target_level; current_level >= 0; current_level--){
-				if(hierarchical && !cubic) decompose_interleave_level_1D_with_hierarchical_basis(data, n, h, current_level);
-				else decompose_interleave_level_1D_cubic_with_hierarchical_basis(data, n, h, current_level);
+                bool use_linear = (current_level == 1);
+				if(use_linear) decompose_interleave_level_1D_with_hierarchical_basis(data, n, h, current_level);
+				else           decompose_interleave_level_1D_cubic_with_hierarchical_basis(data, n, h, current_level);
 				h <<= 1;
 			}
 		}
@@ -51,8 +52,9 @@ public:
 			size_t n1 = dims[0];
 			size_t n2 = dims[1];
 			for(int current_level=target_level; current_level >= 0; current_level--){
-				if(hierarchical && !cubic) decompose_interleave_2D_with_hierarchical_basis(data, n1, n2, h, current_level);
-				else decompose_interleave_2D_cubic_with_hierarchical_basis(data, n1, n2, h, current_level);
+                bool use_linear = (current_level == 1);
+				if(use_linear) decompose_interleave_2D_with_hierarchical_basis(data, n1, n2, h, current_level);
+				else           decompose_interleave_2D_cubic_with_hierarchical_basis(data, n1, n2, h, current_level);
 				h <<= 1;
 			}
 		}
@@ -66,8 +68,9 @@ public:
 				pos = 0;
 				left = 0;
 				right = 0;
-				if(hierarchical && !cubic) decompose_interleave_3D_with_hierarchical_basis(data, n1, n2, n3, h, current_level);
-				else decompose_interleave_3D_cubic_with_hierarchical_basis(data, n1, n2, n3, h, current_level);
+                bool use_linear = (current_level == 1);
+				if(use_linear) decompose_interleave_3D_with_hierarchical_basis(data, n1, n2, n3, h, current_level);
+				else           decompose_interleave_3D_cubic_with_hierarchical_basis(data, n1, n2, n3, h, current_level);
 				// std::cout << "level " << current_level << ", abs_max*4 = " << abs_max*4 << ", abs_max = " << abs_max << ", pos = " << pos << ", = (" << left << " + " << right << ")/2" << std::endl;
 				// std::cout << pos / (dims[1]*dims[2]) << " ";
 				// pos = pos % (dims[1]*dims[2]);

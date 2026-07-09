@@ -50,6 +50,33 @@ public:
 		
         return std::move(data_buffer);
 	}
+	std::vector<T> recompose_test(std::vector<std::vector<T>>& level_buffers_, const vector<size_t>& dims, const size_t direction=0, size_t target_level=1, bool hierarchical=false, bool cubic=false, vector<size_t> strides=vector<size_t>()){
+		if(dims.size() != 3){
+			std::cerr << "Only support 3D dataset" << std::endl;
+			exit(-1);
+		}
+		size_t num_elements = 1;
+		for(const auto& d:dims){
+			num_elements *= d;
+		}
+
+		init(dims, direction, target_level);
+		data_buffer.resize(num_elements);
+		std::fill(data_buffer.begin(), data_buffer.end(), 0);
+
+		level_buffers = level_buffers_;
+		
+		size_t h = 1 << target_level;
+		size_t n1 = dims[0];
+		size_t n2 = dims[1];
+		size_t n3 = dims[2];
+		for(int current_level=0; current_level <= target_level; current_level++){
+			recompose_level_3D_HB_with_direction_test(data_buffer.data(), n1, n2, n3, h, direction, current_level);
+			h >>= 1;
+		}
+		
+        return std::move(data_buffer);
+	}
 	std::vector<std::vector<uint32_t>> get_level_buffer_dims(){
 		return level_buffer_dims;
 	}
@@ -1118,6 +1145,42 @@ private:
 					count_3D = compute_interpolant_difference_2D_along_direction_2(data_pos, n1, n2, n3, h, current_level);
 					size_t count_3D_ = recover_from_interpolant_difference_2D_along_direction_2(data_pos, n1, n2, n3, h, current_level);
 					assert(count_3D == count_3D_);
+				}
+				break;
+			}
+			default:
+				std::cerr << "Unsupported direction" << std::endl;
+				exit(-1);
+		}
+		// std::cout << "current_level = " << current_level << std::endl;
+		// std::cout << "count_3D = " << count_3D << ", level_size = " << ((current_level) ? level_sizes[((current_level - 1) * 2) + 1] + level_sizes[((current_level - 1) * 2) + 2] : level_sizes[0]) << std::endl;
+		assert(count_3D == (current_level) ? level_sizes[((current_level - 1) * 2) + 1] + level_sizes[((current_level - 1) * 2) + 2] : level_sizes[0]);
+    }
+
+	void recompose_level_3D_HB_with_direction_test(T * data_pos, size_t n1, size_t n2, size_t n3, T h, size_t direction, size_t current_level){
+		size_t count_3D = 0;
+		switch (direction){
+			case 0:
+			{
+				if(current_level == 0) count_3D = reposition_2D_level_0_along_direction_0(data_pos, n1, n2, n3, h);
+				else{
+					count_3D = recover_from_interpolant_difference_2D_along_direction_0(data_pos, n1, n2, n3, h, current_level);
+				}
+				break;
+			}
+			case 1:
+			{
+				if(current_level == 0) count_3D = reposition_2D_level_0_along_direction_1(data_pos, n1, n2, n3, h);
+				else{
+					count_3D = recover_from_interpolant_difference_2D_along_direction_1(data_pos, n1, n2, n3, h, current_level);
+				}
+				break;
+			}
+			case 2:
+			{
+				if(current_level == 0) count_3D = reposition_2D_level_0_along_direction_2(data_pos, n1, n2, n3, h);
+				else{
+					count_3D = recover_from_interpolant_difference_2D_along_direction_2(data_pos, n1, n2, n3, h, current_level);
 				}
 				break;
 			}

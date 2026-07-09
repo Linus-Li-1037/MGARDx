@@ -4,8 +4,8 @@
 #include <vector>
 #include <iomanip>
 #include <cmath>
-#include "decompose_interleave.hpp"
-#include "reposition_recompose.hpp"
+#include "decompose_interleave_hybrid.hpp"
+#include "reposition_recompose_hybrid.hpp"
 
 using namespace std;
 
@@ -14,8 +14,8 @@ std::vector<std::vector<T>> test_decompose(vector<T>& data, const vector<size_t>
     struct timespec start, end;
     int err = 0;
     err = clock_gettime(CLOCK_REALTIME, &start);
-    MGARD::Decomposer_Interleaver<T> decomposer;
-    std::vector<std::vector<T>> level_buffers = decomposer.decompose(data.data(), dims, target_level, false, true);
+    MGARD::Decomposer_Interleaver_hybrid<T> decomposer;
+    std::vector<std::vector<T>> level_buffers = decomposer.decompose(data.data(), dims, target_level);
     err = clock_gettime(CLOCK_REALTIME, &end);
     cout << "Decomposition time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
     return level_buffers;
@@ -26,8 +26,8 @@ std::vector<T> test_recompose(std::vector<std::vector<T>>& level_buffers, const 
     struct timespec start, end;
     int err = 0;
     err = clock_gettime(CLOCK_REALTIME, &start);
-    MGARD::Repositioner_Recomposer<T> recomposer;
-    std::vector<T> recovered_data = recomposer.recompose(level_buffers, dims, target_level, false, true);
+    MGARD::Repositioner_Recomposer_hybrid<T> recomposer;
+    std::vector<T> recovered_data = recomposer.recompose(level_buffers, dims, target_level);
     err = clock_gettime(CLOCK_REALTIME, &end);
     cout << "Recomposition time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
     return recovered_data;
@@ -75,6 +75,7 @@ int main(int argc, char ** argv){
        cout << dims[i] << " ";
     }
     cout << endl;
+
     switch(type){
         case 0:
             {

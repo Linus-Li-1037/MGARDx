@@ -41,6 +41,13 @@ void test_sampling(std::vector<T>& data, const vector<size_t>& dims, int target_
     err = clock_gettime(CLOCK_REALTIME, &start);
     std::vector<std::vector<T>> sampled_blocks;
     MGARD::sample_blocks(data.data(), dims, sampled_blocks, stride, block_size);
+    std::cout << "sampled_blocks.size() = " << sampled_blocks.size() << std::endl;
+    std::vector<std::vector<size_t>> starts;
+    MGARD::profiling_blocks(data.data(), dims, starts, 5, 1e-5, 3);
+    std::cout << "starts.size() = " << starts.size() << std::endl;
+    std::vector<std::vector<T>> sampled_blocks1;
+    MGARD::sample_blocks_after_profiling(data.data(), dims, sampled_blocks1, starts, 5);
+    std::cout << "sampled_blocks1.size() = " << sampled_blocks1.size() << std::endl;
     err = clock_gettime(CLOCK_REALTIME, &end);
     cout << "Sampling time: " << (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000 << "s" << endl;
 }
