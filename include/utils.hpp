@@ -6,6 +6,7 @@
 #include <cstring>
 #include <fstream>
 #include <cassert>
+#include <cstdint>
 
 namespace MGARD{
 
